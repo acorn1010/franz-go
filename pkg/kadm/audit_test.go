@@ -149,8 +149,10 @@ func TestFilterTypesNoDuplicates(t *testing.T) {
 }
 
 // FetchOffsetsForTopics previously filtered the caller's variadic slice in
-// place, rewriting its backing array.
-func TestFetchOffsetsForTopicsDoesNotMutateInput(t *testing.T) {
+// place, and Lag rebuilt its group list in the caller's slice, both rewriting
+// the backing array. Lag's repeated name makes its set smaller than the slice,
+// so the rewrite is visible whatever the map order.
+func TestVariadicInputNotMutated(t *testing.T) {
 	cl, err := kgo.NewClient(kgo.SeedBrokers("localhost:1"))
 	if err != nil {
 		t.Fatal(err)
@@ -163,27 +165,12 @@ func TestFetchOffsetsForTopicsDoesNotMutateInput(t *testing.T) {
 	topics := []string{FetchAllGroupTopics, "a", "b"}
 	adm.FetchOffsetsForTopics(ctx, "g", topics...) //nolint:errcheck // the canceled ctx fails the call; we assert only non-mutation
 	if topics[0] != FetchAllGroupTopics || topics[1] != "a" || topics[2] != "b" {
-		t.Errorf("caller slice was mutated: %v", topics)
+		t.Errorf("FetchOffsetsForTopics mutated the caller's slice: %v", topics)
 	}
-}
-
-// Lag previously rebuilt its group list in the caller's variadic slice,
-// rewriting its backing array. A repeated name makes the set smaller than the
-// slice, so the rewrite is visible whatever the map order.
-func TestLagDoesNotMutateInput(t *testing.T) {
-	cl, err := kgo.NewClient(kgo.SeedBrokers("localhost:1"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer cl.Close()
-	adm := NewClient(cl)
-
-	ctx, cancel := context.WithCancel(context.Background())
-	cancel()
 	groups := []string{"a", "a", "b"}
 	adm.Lag(ctx, groups...) //nolint:errcheck // the canceled ctx fails the call; we assert only non-mutation
 	if groups[0] != "a" || groups[1] != "a" || groups[2] != "b" {
-		t.Errorf("caller slice was mutated: %v", groups)
+		t.Errorf("Lag mutated the caller's slice: %v", groups)
 	}
 }
 
