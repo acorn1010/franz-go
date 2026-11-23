@@ -87,6 +87,7 @@ func GenerateFn(fn func() any) EncodingOpt {
 //
 //	https://docs.confluent.io/platform/current/schema-registry/serdes-develop/index.html#wire-format
 func Index(index ...int) EncodingOpt {
+	index = slices.Clone(index)
 	return encodingOpt{func(t *tserde) { t.index = index }}
 }
 

@@ -63,7 +63,9 @@ func TestSerde(t *testing.T) {
 	}))
 	serde.Register(3, idx4{}, Index(0, 0, 1))
 	serde.Register(3, idx3{}, Index(0, 0))
-	serde.Register(5, oneidx{}, Index(0), GenerateFn(func() any { return &oneidx{Foo: "defoo", Bar: "debar"} }))
+	oneidxIndex := []int{0}
+	serde.Register(5, oneidx{}, Index(oneidxIndex...), GenerateFn(func() any { return &oneidx{Foo: "defoo", Bar: "debar"} }))
+	oneidxIndex[0] = 1 // Index must not keep the caller's slice
 	serde.Register(101, struct{}{}, DecodeFn(nil))
 
 	for i, test := range []struct {
