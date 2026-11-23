@@ -634,6 +634,8 @@ func (s *Serde) IsRegistered(id int, encodingOptFns ...any) bool {
 			is = is && t.decode != nil
 		case namefn(GenerateFn):
 			is = is && t.gen != nil
+		default:
+			return false
 		}
 	}
 	return is
