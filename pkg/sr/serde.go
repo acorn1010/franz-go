@@ -177,8 +177,8 @@ func (s *Serde) DecodeID(b []byte) (id int, out []byte, err error) {
 }
 
 // DecodeIndex decodes at most maxLength of a schema index from in, returning
-// the index and remaining bytes, or an error. It expects b to be the output of
-// DecodeID (schema ID should already be stripped away).
+// the index and remaining bytes, or an error. It expects in to be the output
+// of DecodeID (schema ID should already be stripped away).
 func (s *Serde) DecodeIndex(in []byte, maxLength int) (index []int, out []byte, err error) {
 	return s.header().DecodeIndex(in, maxLength)
 }
