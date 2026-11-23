@@ -37,12 +37,20 @@ func TestSerde(t *testing.T) {
 			Foo string `json:"foo,omitempty"`
 			Bar string `json:"bar,omitempty"`
 		}
+		moved struct {
+			Moved string `json:"moved,omitempty"`
+		}
 	)
 
 	serde := NewSerde(
 		EncodeFn(json.Marshal),
 		DecodeFn(json.Unmarshal),
 	)
+	serde.Register(126, moved{}, Index(1))
+	serde.Register(128, moved{})
+	serde.Register(128, moved{}, Index(1))      // moved now encodes with ID 128, index 1
+	serde.Register(126, overridden{}, Index(1)) // overrides moved's old 126, index 1
+	serde.Register(128, overridden{})           // overrides moved's old 128
 	serde.Register(127, overridden{}, GenerateFn(func() any { return new(overridden) }))
 	serde.Register(127, overrides{})
 	serde.Register(3, idx1{}, Index(0))
@@ -87,6 +95,10 @@ func TestSerde(t *testing.T) {
 		{
 			enc:    idx4{Bingo: "bango"},
 			expEnc: append([]byte{0, 0, 0, 0, 3, 6, 0, 0, 2}, `{"bingo":"bango"}`...),
+		},
+		{
+			enc:    moved{"m"},
+			expEnc: append([]byte{0, 0, 0, 0, 128, 2, 2}, `{"moved":"m"}`...),
 		},
 		{
 			enc:    oneidx{Bar: "bar"},
@@ -615,34 +627,5 @@ func TestIsRegistered(t *testing.T) {
 	// Test registered ID 4 without functions, checking for EncodeFn
 	if serde.IsRegistered(4, EncodeFn) {
 		t.Error("expected ID 4 to not have EncodeFn")
-	}
-}
-
-func TestRegisterOverrideKeepsMovedType(t *testing.T) {
-	type moved struct {
-		A int `json:"a"`
-	}
-	type other struct {
-		B int `json:"b"`
-	}
-
-	var serde Serde
-	serde.Register(1, moved{}, EncodeFn(json.Marshal))
-	serde.Register(2, moved{}, EncodeFn(json.Marshal)) // moved now encodes with ID 2
-	serde.Register(1, other{}, EncodeFn(json.Marshal)) // overriding ID 1 must not drop moved
-
-	b, err := serde.Encode(moved{A: 1})
-	if err != nil {
-		t.Fatalf("unable to encode type registered to ID 2: %v", err)
-	}
-	if id, _, err := serde.DecodeID(b); err != nil || id != 2 {
-		t.Errorf("got id %d, err %v; want id 2", id, err)
-	}
-	b, err = serde.Encode(other{B: 1})
-	if err != nil {
-		t.Fatalf("unable to encode type registered to ID 1: %v", err)
-	}
-	if id, _, err := serde.DecodeID(b); err != nil || id != 1 {
-		t.Errorf("got id %d, err %v; want id 1", id, err)
 	}
 }
