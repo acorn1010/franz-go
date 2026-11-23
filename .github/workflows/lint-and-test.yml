@@ -57,6 +57,34 @@ jobs:
       - uses: actions/checkout@v4
       - run: cd pkg/sr && go work init ../.. . && go test ./... && go test -race ./...
 
+  test-kadm:
+    if: github.repository == 'twmb/franz-go'
+    runs-on: ubuntu-latest
+    name: "test kadm"
+    container: golang:latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: cd pkg/kadm && go work init ../.. . ../kmsg && go test ./... && go test -race ./...
+
+  test-kmsg:
+    if: github.repository == 'twmb/franz-go'
+    runs-on: ubuntu-latest
+    name: "test kmsg"
+    container: golang:latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: cd pkg/kmsg && go test ./... && go test -race ./...
+
+  test-plugins:
+    if: github.repository == 'twmb/franz-go'
+    runs-on: ubuntu-latest
+    name: "test plugins and examples"
+    container: golang:latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: for d in plugin/*/; do (cd $d && go work init ../.. . && go test ./... && go test -race ./...) || exit 1; done
+      - run: cd examples/testing_with_kfake_and_synctest && go test -mod=mod ./...
+
   integration-test-kfake:
     if: github.repository == 'twmb/franz-go'
     runs-on: ubuntu-latest
