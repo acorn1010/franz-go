@@ -512,6 +512,7 @@ func TestIsRegistered(t *testing.T) {
 		{2, []any{EncodeFn, DecodeFn}, true},
 		{2, []any{"EncodeFn"}, true},
 		{2, []any{"encodeFn"}, false}, // unknown name
+		{2, []any{nil}, false},
 		{2, []any{EncodeFn, GenerateFn}, false},
 		{2, []any{AppendEncodeFn}, false},
 		{3, []any{AppendEncodeFn, GenerateFn}, true},
